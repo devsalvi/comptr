@@ -166,53 +166,63 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {tickets.map((ticket) => {
               const lastMessage = getLastMessage(ticket);
               return (
                 <div
                   key={ticket.ticket_id}
                   onClick={() => handleTicketClick(ticket.ticket_id)}
-                  className="bg-white rounded-2xl shadow-apple hover:shadow-apple-lg cursor-pointer transition-all hover:-translate-y-1 active:scale-[0.98] border border-apple-gray-100"
+                  className="bg-white rounded-2xl shadow-apple hover:shadow-apple-xl cursor-pointer transition-all hover:-translate-y-2 active:scale-[0.98] border border-apple-gray-100 flex flex-col h-full"
                 >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0 pr-6">
-                        <div className="flex items-center flex-wrap gap-2 mb-4">
-                          <ChannelBadge channel={ticket.source.channel} />
-                          <StatusBadge status={ticket.status} />
-                          <PriorityBadge priority={ticket.priority} />
-                          {ticket.source.is_bot_handoff && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                              Bot Handoff
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-semibold text-apple-gray-900 mb-2 line-clamp-1">
-                          {ticket.subject}
-                        </h3>
-                        <p className="text-sm font-medium text-apple-gray-600 mb-3">
-                          {ticket.customer.name || ticket.customer.channel_identity}
-                        </p>
-                        {lastMessage && (
-                          <p className="text-sm text-apple-gray-500 line-clamp-2 leading-relaxed">
-                            {lastMessage.content}
-                          </p>
-                        )}
+                  <div className="p-6 flex flex-col flex-1">
+                    {/* Header with badges */}
+                    <div className="flex items-center flex-wrap gap-2 mb-4">
+                      <ChannelBadge channel={ticket.source.channel} />
+                      <StatusBadge status={ticket.status} />
+                      <PriorityBadge priority={ticket.priority} />
+                      {ticket.source.is_bot_handoff && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                          Bot Handoff
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Ticket subject */}
+                    <h3 className="text-lg font-semibold text-apple-gray-900 mb-3 line-clamp-2 leading-snug">
+                      {ticket.subject}
+                    </h3>
+
+                    {/* Customer info */}
+                    <div className="flex items-center space-x-2 mb-4 pb-4 border-b border-apple-gray-100">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-apple-blue to-apple-blue-dark flex items-center justify-center flex-shrink-0">
+                        <Users className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex-shrink-0 text-right space-y-3">
-                        <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-apple-gray-50 border border-apple-gray-200">
-                          <Clock className="h-3.5 w-3.5 mr-1.5 text-apple-gray-500" />
-                          <span className="text-xs font-medium text-apple-gray-700">
-                            {formatDistanceToNow(new Date(ticket.updated_at), {
-                              addSuffix: true,
-                            })}
-                          </span>
-                        </div>
-                        <div className="text-xs font-medium text-apple-gray-500">
-                          <MessageSquare className="h-3.5 w-3.5 inline mr-1" />
-                          {ticket.timeline.length} {ticket.timeline.length === 1 ? 'message' : 'messages'}
-                        </div>
+                      <p className="text-sm font-medium text-apple-gray-700 truncate">
+                        {ticket.customer.name || ticket.customer.channel_identity}
+                      </p>
+                    </div>
+
+                    {/* Last message preview */}
+                    {lastMessage && (
+                      <div className="flex-1 mb-4">
+                        <p className="text-sm text-apple-gray-500 line-clamp-3 leading-relaxed">
+                          {lastMessage.content}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Footer with time and message count */}
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-apple-gray-100">
+                      <div className="flex items-center text-xs font-medium text-apple-gray-500">
+                        <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                        {ticket.timeline.length} {ticket.timeline.length === 1 ? 'msg' : 'msgs'}
+                      </div>
+                      <div className="flex items-center text-xs font-medium text-apple-gray-500">
+                        <Clock className="h-3.5 w-3.5 mr-1.5" />
+                        {formatDistanceToNow(new Date(ticket.updated_at), {
+                          addSuffix: true,
+                        })}
                       </div>
                     </div>
                   </div>
