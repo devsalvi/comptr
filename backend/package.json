@@ -1,0 +1,15 @@
+{
+  "name": "omnichannel-support-backend",
+  "version": "1.0.0",
+  "description": "Backend for Omnichannel Support System",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-python-requirements": "^6.1.0"
+  }
+}

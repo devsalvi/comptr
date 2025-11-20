@@ -1,0 +1,279 @@
+# Serverless Framework configuration for AWS Lambda deployment
+service: omnichannel-support-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+
+  # API Gateway configuration
+  apiGateway:
+    restApiId: !Ref ApiGateway
+    restApiRootResourceId: !GetAtt ApiGateway.RootResourceId
+
+  # IAM permissions
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt TicketsTable.Arn
+            - !GetAtt CustomersTable.Arn
+            - Fn::Join:
+                - '/'
+                - - !GetAtt TicketsTable.Arn
+                  - 'index/*'
+            - Fn::Join:
+                - '/'
+                - - !GetAtt CustomersTable.Arn
+                  - 'index/*'
+
+        # Secrets Manager for API keys
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - arn:aws:secretsmanager:${self:provider.region}:*:secret:support-api/*
+
+        # MSK (Kafka) permissions
+        - Effect: Allow
+          Action:
+            - kafka:DescribeCluster
+            - kafka:GetBootstrapBrokers
+          Resource:
+            - !Ref MSKCluster
+
+  # Environment variables
+  environment:
+    DYNAMODB_TICKETS_TABLE: !Ref TicketsTable
+    DYNAMODB_CUSTOMERS_TABLE: !Ref CustomersTable
+    KAFKA_BOOTSTRAP_SERVERS: !GetAtt MSKCluster.BootstrapBrokerStringTls
+    COGNITO_USER_POOL_ID: !Ref CognitoUserPool
+    COGNITO_APP_CLIENT_ID: !Ref CognitoUserPoolClient
+    COGNITO_REGION: ${self:provider.region}
+
+# Lambda functions
+functions:
+  api:
+    handler: app.main.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+      - http:
+          path: /
+          method: ANY
+          cors: true
+
+# CloudFormation resources
+resources:
+  Resources:
+    # API Gateway
+    ApiGateway:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:service}-${self:provider.stage}
+        Description: Omnichannel Support API Gateway
+
+    # DynamoDB Tables
+    TicketsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: support-tickets-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ticket_id
+            AttributeType: S
+          - AttributeName: customer_id
+            AttributeType: S
+          - AttributeName: status_timestamp
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ticket_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: CustomerIndex
+            KeySchema:
+              - AttributeName: customer_id
+                KeyType: HASH
+              - AttributeName: status_timestamp
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+
+    CustomersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: support-customers-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: internal_id
+            AttributeType: S
+          - AttributeName: channel_identity
+            AttributeType: S
+        KeySchema:
+          - AttributeName: internal_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ChannelIdentityIndex
+            KeySchema:
+              - AttributeName: channel_identity
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+
+    # Cognito User Pool
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: support-agents-${self:provider.stage}
+        AutoVerifiedAttributes:
+          - email
+        UsernameAttributes:
+          - email
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: false
+          - Name: name
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: support-web-client-${self:provider.stage}
+        UserPoolId: !Ref CognitoUserPool
+        GenerateSecret: false
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    CognitoAgentsGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Agents
+        Description: Support agents with full access
+        UserPoolId: !Ref CognitoUserPool
+
+    # MSK (Kafka) Cluster
+    MSKCluster:
+      Type: AWS::MSK::Cluster
+      Properties:
+        ClusterName: support-events-${self:provider.stage}
+        KafkaVersion: 3.5.1
+        NumberOfBrokerNodes: 2
+        BrokerNodeGroupInfo:
+          InstanceType: kafka.t3.small
+          ClientSubnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref MSKSecurityGroup
+          StorageInfo:
+            EBSStorageInfo:
+              VolumeSize: 100
+        EncryptionInfo:
+          EncryptionInTransit:
+            ClientBroker: TLS
+            InCluster: true
+
+    # VPC for MSK
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+        EnableDnsHostnames: true
+        EnableDnsSupport: true
+        Tags:
+          - Key: Name
+            Value: support-vpc-${self:provider.stage}
+
+    PrivateSubnet1:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.1.0/24
+        AvailabilityZone: !Select [0, !GetAZs '']
+
+    PrivateSubnet2:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.2.0/24
+        AvailabilityZone: !Select [1, !GetAZs '']
+
+    MSKSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: MSK Cluster Security Group
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 9094
+            ToPort: 9094
+            CidrIp: 10.0.0.0/16
+
+  Outputs:
+    ApiUrl:
+      Description: API Gateway endpoint URL
+      Value: !Sub https://${ApiGateway}.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+
+    UserPoolId:
+      Description: Cognito User Pool ID
+      Value: !Ref CognitoUserPool
+
+    UserPoolClientId:
+      Description: Cognito User Pool Client ID
+      Value: !Ref CognitoUserPoolClient
+
+    TicketsTableName:
+      Description: DynamoDB Tickets Table Name
+      Value: !Ref TicketsTable
+
+    CustomersTableName:
+      Description: DynamoDB Customers Table Name
+      Value: !Ref CustomersTable
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+    strip: false

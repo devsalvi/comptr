@@ -1,0 +1,212 @@
+# Simplified Serverless configuration for initial deployment
+# This version skips MSK/Kafka to reduce complexity and cost
+service: omnichannel-support-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+
+  # Lambda settings
+  timeout: 30
+  memorySize: 512
+
+  # IAM permissions
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt TicketsTable.Arn
+            - !GetAtt CustomersTable.Arn
+            - Fn::Join:
+                - '/'
+                - - !GetAtt TicketsTable.Arn
+                  - 'index/*'
+            - Fn::Join:
+                - '/'
+                - - !GetAtt CustomersTable.Arn
+                  - 'index/*'
+
+        # Secrets Manager for API keys
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - 'arn:aws:secretsmanager:${self:provider.region}:*:secret:support-api/*'
+
+  # Environment variables
+  environment:
+    DYNAMODB_TICKETS_TABLE: !Ref TicketsTable
+    DYNAMODB_CUSTOMERS_TABLE: !Ref CustomersTable
+    COGNITO_USER_POOL_ID: !Ref CognitoUserPool
+    COGNITO_APP_CLIENT_ID: !Ref CognitoUserPoolClient
+    COGNITO_REGION: ${self:provider.region}
+    KAFKA_BOOTSTRAP_SERVERS: ''  # Disabled for initial deployment
+    AWS_REGION: ${self:provider.region}
+
+# Lambda functions
+functions:
+  api:
+    handler: app.main.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY
+
+# CloudFormation resources
+resources:
+  Resources:
+    # DynamoDB Tables
+    TicketsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: support-tickets-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ticket_id
+            AttributeType: S
+          - AttributeName: customer_id
+            AttributeType: S
+          - AttributeName: status_timestamp
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ticket_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: CustomerIndex
+            KeySchema:
+              - AttributeName: customer_id
+                KeyType: HASH
+              - AttributeName: status_timestamp
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Service
+            Value: omnichannel-support
+
+    CustomersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: support-customers-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: internal_id
+            AttributeType: S
+          - AttributeName: channel_identity
+            AttributeType: S
+        KeySchema:
+          - AttributeName: internal_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ChannelIdentityIndex
+            KeySchema:
+              - AttributeName: channel_identity
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Service
+            Value: omnichannel-support
+
+    # Cognito User Pool
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: support-agents-${self:provider.stage}
+        AutoVerifiedAttributes:
+          - email
+        UsernameAttributes:
+          - email
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: false
+          - Name: name
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: false
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: support-web-client-${self:provider.stage}
+        UserPoolId: !Ref CognitoUserPool
+        GenerateSecret: false
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    CognitoAgentsGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Agents
+        Description: Support agents with full access
+        UserPoolId: !Ref CognitoUserPool
+
+  Outputs:
+    ApiUrl:
+      Description: API Gateway endpoint URL
+      Value:
+        Fn::Sub: https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+      Export:
+        Name: ${self:service}-${self:provider.stage}-api-url
+
+    UserPoolId:
+      Description: Cognito User Pool ID
+      Value: !Ref CognitoUserPool
+      Export:
+        Name: ${self:service}-${self:provider.stage}-user-pool-id
+
+    UserPoolClientId:
+      Description: Cognito User Pool Client ID
+      Value: !Ref CognitoUserPoolClient
+      Export:
+        Name: ${self:service}-${self:provider.stage}-user-pool-client-id
+
+    TicketsTableName:
+      Description: DynamoDB Tickets Table Name
+      Value: !Ref TicketsTable
+
+    CustomersTableName:
+      Description: DynamoDB Customers Table Name
+      Value: !Ref CustomersTable
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    strip: false
+    layer: false
+    zip: true
