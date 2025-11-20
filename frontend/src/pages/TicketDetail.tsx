@@ -71,7 +71,7 @@ const TicketDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
       </div>
     );
   }
@@ -79,53 +79,53 @@ const TicketDetail: React.FC = () => {
   if (!ticket) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Ticket not found</p>
+        <p className="text-apple-gray-500">Ticket not found</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <button
           onClick={() => navigate('/tickets')}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Back to tickets
         </button>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-white rounded-2xl shadow-apple p-8">
+          <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">
+              <h1 className="text-3xl font-semibold text-apple-gray-900 mb-4 tracking-tight">
                 {ticket.subject}
               </h1>
-              <div className="flex items-center space-x-3 mb-3">
+              <div className="flex items-center space-x-3 mb-4">
                 <ChannelBadge channel={ticket.source.channel} />
                 <StatusBadge status={ticket.status} />
                 <PriorityBadge priority={ticket.priority} />
               </div>
-              <div className="text-sm text-gray-600">
-                <p>Customer: {ticket.customer.name || ticket.customer.channel_identity}</p>
+              <div className="text-sm text-apple-gray-600 space-y-1">
+                <p className="font-medium">Customer: {ticket.customer.name || ticket.customer.channel_identity}</p>
                 {ticket.customer.primary_email && (
                   <p>Email: {ticket.customer.primary_email}</p>
                 )}
-                <p>Ticket ID: {ticket.ticket_id}</p>
-                <p>Created: {format(new Date(ticket.created_at), 'PPpp')}</p>
+                <p className="text-apple-gray-500">Ticket ID: {ticket.ticket_id}</p>
+                <p className="text-apple-gray-500">Created: {format(new Date(ticket.created_at), 'PPpp')}</p>
               </div>
             </div>
 
             {/* Status selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="ml-6">
+              <label className="block text-sm font-medium text-apple-gray-700 mb-2">
                 Status
               </label>
               <select
                 value={selectedStatus || ticket.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="block rounded-lg border-apple-gray-300 bg-white px-4 py-2 text-sm font-medium text-apple-gray-700 shadow-apple focus:border-apple-blue focus:ring-2 focus:ring-apple-blue focus:ring-opacity-50 transition-all"
               >
                 <option value="new">New</option>
                 <option value="open">Open</option>
@@ -137,11 +137,11 @@ const TicketDetail: React.FC = () => {
           </div>
 
           {ticket.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-apple-gray-100">
               {ticket.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-apple-gray-100 text-apple-gray-700"
                 >
                   {tag}
                 </span>
@@ -152,9 +152,9 @@ const TicketDetail: React.FC = () => {
       </div>
 
       {/* Timeline */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white rounded-2xl shadow-apple mb-6">
+        <div className="p-8">
+          <h2 className="text-xl font-semibold text-apple-gray-900 mb-6 tracking-tight">
             Conversation Timeline
           </h2>
           <div className="space-y-4">
@@ -166,24 +166,24 @@ const TicketDetail: React.FC = () => {
       </div>
 
       {/* Reply Box */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky bottom-0">
-        <div className="mb-3">
-          <label className="flex items-center space-x-2 text-sm text-gray-700 mb-2">
+      <div className="bg-white rounded-2xl shadow-apple-lg p-6 sticky bottom-4">
+        <div className="mb-4">
+          <label className="flex items-center space-x-2 text-sm text-apple-gray-700 mb-3">
             <input
               type="checkbox"
               checked={isInternalNote}
               onChange={(e) => setIsInternalNote(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-apple-gray-300 text-apple-blue focus:ring-apple-blue focus:ring-opacity-50"
             />
-            <span className="flex items-center">
+            <span className="flex items-center font-medium">
               {isInternalNote ? (
                 <>
-                  <EyeOff className="h-4 w-4 mr-1" />
+                  <EyeOff className="h-4 w-4 mr-1.5" />
                   Internal Note (not visible to customer)
                 </>
               ) : (
                 <>
-                  <Eye className="h-4 w-4 mr-1" />
+                  <Eye className="h-4 w-4 mr-1.5" />
                   Public Reply (sent to customer)
                 </>
               )}
@@ -203,17 +203,17 @@ const TicketDetail: React.FC = () => {
                 : 'Type your reply to the customer...'
             }
             rows={4}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-xl border-apple-gray-300 shadow-apple focus:border-apple-blue focus:ring-2 focus:ring-apple-blue focus:ring-opacity-50 sm:text-sm transition-all resize-none"
           />
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs font-medium text-apple-gray-500">
             Cmd/Ctrl + Enter to send
           </p>
           <button
             onClick={handleSendMessage}
             disabled={!messageContent.trim() || sendMessageMutation.isPending}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             {sendMessageMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
