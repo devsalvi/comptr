@@ -1,5 +1,14 @@
 import React from 'react';
-import { MessageCircle, Mail, Facebook, Twitter, MessageSquare, Instagram } from 'lucide-react';
+import { Tag } from 'antd';
+import {
+  MessageOutlined,
+  MailOutlined,
+  FacebookOutlined,
+  TwitterOutlined,
+  WhatsAppOutlined,
+  InstagramOutlined,
+  CommentOutlined,
+} from '@ant-design/icons';
 
 interface ChannelBadgeProps {
   channel: string;
@@ -10,60 +19,56 @@ const ChannelBadge: React.FC<ChannelBadgeProps> = ({ channel }) => {
     switch (channel.toLowerCase()) {
       case 'email':
         return {
-          icon: Mail,
+          icon: <MailOutlined />,
           label: 'Email',
-          className: 'bg-blue-50 text-blue-700 border-blue-200',
+          color: 'blue',
         };
       case 'facebook':
         return {
-          icon: Facebook,
+          icon: <FacebookOutlined />,
           label: 'Facebook',
-          className: 'bg-blue-50 text-blue-700 border-blue-200',
+          color: 'blue',
         };
       case 'twitter':
         return {
-          icon: Twitter,
+          icon: <TwitterOutlined />,
           label: 'Twitter',
-          className: 'bg-sky-50 text-sky-700 border-sky-200',
+          color: 'cyan',
         };
       case 'whatsapp':
       case 'whatsapp_business':
         return {
-          icon: MessageCircle,
+          icon: <WhatsAppOutlined />,
           label: 'WhatsApp',
-          className: 'bg-green-50 text-green-700 border-green-200',
+          color: 'green',
         };
       case 'instagram':
         return {
-          icon: Instagram,
+          icon: <InstagramOutlined />,
           label: 'Instagram',
-          className: 'bg-pink-50 text-pink-700 border-pink-200',
+          color: 'magenta',
         };
       case 'web_chat':
         return {
-          icon: MessageSquare,
+          icon: <CommentOutlined />,
           label: 'Web Chat',
-          className: 'bg-purple-50 text-purple-700 border-purple-200',
+          color: 'purple',
         };
       default:
         return {
-          icon: MessageSquare,
+          icon: <MessageOutlined />,
           label: channel,
-          className: 'bg-apple-gray-100 text-apple-gray-700 border-apple-gray-200',
+          color: 'default',
         };
     }
   };
 
   const config = getChannelConfig(channel);
-  const Icon = config.icon;
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${config.className}`}
-    >
-      <Icon className="h-3 w-3 mr-1" />
+    <Tag color={config.color} icon={config.icon}>
       {config.label}
-    </span>
+    </Tag>
   );
 };
 

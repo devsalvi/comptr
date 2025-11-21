@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tag } from 'antd';
 
 interface StatusBadgeProps {
   status: string;
@@ -10,32 +11,32 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case 'new':
         return {
           label: 'New',
-          className: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
+          color: 'gold',
         };
       case 'open':
         return {
           label: 'Open',
-          className: 'bg-blue-50 text-apple-blue border border-blue-200',
+          color: 'blue',
         };
       case 'pending_customer':
         return {
           label: 'Pending',
-          className: 'bg-orange-50 text-orange-700 border border-orange-200',
+          color: 'orange',
         };
       case 'resolved':
         return {
           label: 'Resolved',
-          className: 'bg-green-50 text-green-700 border border-green-200',
+          color: 'green',
         };
       case 'closed':
         return {
           label: 'Closed',
-          className: 'bg-apple-gray-100 text-apple-gray-700 border border-apple-gray-200',
+          color: 'default',
         };
       default:
         return {
           label: status,
-          className: 'bg-apple-gray-100 text-apple-gray-700 border border-apple-gray-200',
+          color: 'default',
         };
     }
   };
@@ -43,11 +44,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const config = getStatusConfig(status);
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${config.className}`}
-    >
+    <Tag color={config.color}>
       {config.label}
-    </span>
+    </Tag>
   );
 };
 

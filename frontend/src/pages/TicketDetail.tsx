@@ -2,13 +2,38 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ticketsApi } from '../api/tickets';
-import { ArrowLeft, Send, Eye, EyeOff, Loader2, AlertCircle, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import {
+  Card,
+  Button,
+  Input,
+  Select,
+  Checkbox,
+  Space,
+  Typography,
+  Spin,
+  Alert,
+  Tag,
+  Divider,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  SendOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+  InboxOutlined,
+} from '@ant-design/icons';
 import ChannelBadge from '../components/ChannelBadge';
 import StatusBadge from '../components/StatusBadge';
 import PriorityBadge from '../components/PriorityBadge';
 import MessageBubble from '../components/MessageBubble';
+
+const { TextArea } = Input;
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const TicketDetail: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
@@ -19,16 +44,14 @@ const TicketDetail: React.FC = () => {
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Fetch ticket data
   const { data: ticket, isLoading, error } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: () => ticketsApi.getTicket(ticketId!),
     enabled: !!ticketId,
-    refetchInterval: 5000, // Poll for new messages
+    refetchInterval: 5000,
     retry: 2,
   });
 
-  // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: (message: { content: string; visibility: 'public' | 'internal' }) =>
       ticketsApi.addMessage(ticketId!, message),
@@ -42,7 +65,6 @@ const TicketDetail: React.FC = () => {
     },
   });
 
-  // Update status mutation
   const updateStatusMutation = useMutation({
     mutationFn: (status: string) =>
       ticketsApi.updateTicket(ticketId!, { status: status as any }),
@@ -71,188 +93,179 @@ const TicketDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto">
-        <button
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Button
+          type="link"
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/tickets')}
-          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Back to tickets
-        </button>
-        <div className="text-center py-24 bg-white rounded-2xl shadow-apple-lg">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-apple-blue border-t-transparent"></div>
-          <p className="mt-6 text-base font-medium text-apple-gray-600">Loading ticket details...</p>
-        </div>
-      </div>
+        </Button>
+        <Card>
+          <div style={{ textAlign: 'center', padding: '96px 0' }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 24 }}>
+              <Text>Loading ticket details...</Text>
+            </div>
+          </div>
+        </Card>
+      </Space>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto">
-        <button
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Button
+          type="link"
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/tickets')}
-          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Back to tickets
-        </button>
-        <div className="text-center py-24 bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-apple-lg border border-red-100">
-          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
-            <AlertCircle className="h-10 w-10 text-red-500" />
-          </div>
-          <h3 className="text-xl font-semibold text-apple-gray-900">Unable to load ticket</h3>
-          <p className="mt-3 text-base text-apple-gray-600 max-w-md mx-auto">
-            We couldn't load this ticket. It may have been deleted or you may not have permission to view it.
-          </p>
-          <button
-            onClick={() => navigate('/tickets')}
-            className="mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tickets
-          </button>
-        </div>
-      </div>
+        </Button>
+        <Card>
+          <Alert
+            message="Unable to load ticket"
+            description="We couldn't load this ticket. It may have been deleted or you may not have permission to view it."
+            type="error"
+            showIcon
+            icon={<WarningOutlined />}
+            action={
+              <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => navigate('/tickets')}>
+                Back to Tickets
+              </Button>
+            }
+          />
+        </Card>
+      </Space>
     );
   }
 
   if (!ticket) {
     return (
-      <div className="max-w-5xl mx-auto">
-        <button
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Button
+          type="link"
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/tickets')}
-          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Back to tickets
-        </button>
-        <div className="text-center py-24 bg-gradient-to-br from-white to-apple-gray-50 rounded-2xl shadow-apple-lg border border-apple-gray-100">
-          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-apple-gray-100 mb-6">
-            <MessageSquare className="h-10 w-10 text-apple-gray-400" />
-          </div>
-          <h3 className="text-xl font-semibold text-apple-gray-900">Ticket not found</h3>
-          <p className="mt-3 text-base text-apple-gray-600 max-w-md mx-auto">
-            The ticket you're looking for doesn't exist or has been removed.
-          </p>
-          <button
-            onClick={() => navigate('/tickets')}
-            className="mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tickets
-          </button>
-        </div>
-      </div>
+        </Button>
+        <Card>
+          <Alert
+            message="Ticket not found"
+            description="The ticket you're looking for doesn't exist or has been removed."
+            type="warning"
+            showIcon
+            icon={<InboxOutlined />}
+            action={
+              <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => navigate('/tickets')}>
+                Back to Tickets
+              </Button>
+            }
+          />
+        </Card>
+      </Space>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/tickets')}
-          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-          Back to tickets
-        </button>
+    <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: 1200 }}>
+      <Button
+        type="link"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate('/tickets')}
+      >
+        Back to tickets
+      </Button>
 
-        <div className="bg-white rounded-2xl shadow-apple p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1">
-              <h1 className="text-3xl font-semibold text-apple-gray-900 mb-4 tracking-tight">
+      {/* Header Card */}
+      <Card>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <Title level={2} style={{ marginTop: 0, marginBottom: 16 }}>
                 {ticket.subject}
-              </h1>
-              <div className="flex items-center space-x-3 mb-4">
+              </Title>
+              <Space wrap style={{ marginBottom: 16 }}>
                 <ChannelBadge channel={ticket.source.channel} />
                 <StatusBadge status={ticket.status} />
                 <PriorityBadge priority={ticket.priority} />
-              </div>
-              <div className="text-sm text-apple-gray-600 space-y-1">
-                <p className="font-medium">Customer: {ticket.customer.name || ticket.customer.channel_identity}</p>
+              </Space>
+              <Space direction="vertical" size="small">
+                <Text strong>Customer: {ticket.customer.name || ticket.customer.channel_identity}</Text>
                 {ticket.customer.primary_email && (
-                  <p>Email: {ticket.customer.primary_email}</p>
+                  <Text>Email: {ticket.customer.primary_email}</Text>
                 )}
-                <p className="text-apple-gray-500">Ticket ID: {ticket.ticket_id}</p>
-                <p className="text-apple-gray-500">Created: {format(new Date(ticket.created_at), 'PPpp')}</p>
-              </div>
+                <Text type="secondary">Ticket ID: {ticket.ticket_id}</Text>
+                <Text type="secondary">Created: {format(new Date(ticket.created_at), 'PPpp')}</Text>
+              </Space>
             </div>
 
             {/* Status selector */}
-            <div className="ml-6">
-              <label className="block text-sm font-medium text-apple-gray-700 mb-2">
+            <div style={{ marginLeft: 24 }}>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>
                 Status
-              </label>
-              <select
+              </Text>
+              <Select
                 value={selectedStatus || ticket.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="block rounded-lg border-apple-gray-300 bg-white px-4 py-2 text-sm font-medium text-apple-gray-700 shadow-apple focus:border-apple-blue focus:ring-2 focus:ring-apple-blue focus:ring-opacity-50 transition-all"
+                onChange={handleStatusChange}
+                style={{ width: 180 }}
               >
-                <option value="new">New</option>
-                <option value="open">Open</option>
-                <option value="pending_customer">Pending Customer</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
-              </select>
+                <Option value="new">New</Option>
+                <Option value="open">Open</Option>
+                <Option value="pending_customer">Pending Customer</Option>
+                <Option value="resolved">Resolved</Option>
+                <Option value="closed">Closed</Option>
+              </Select>
             </div>
           </div>
 
           {ticket.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-apple-gray-100">
-              {ticket.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-apple-gray-100 text-apple-gray-700"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <>
+              <Divider style={{ margin: '16px 0' }} />
+              <Space wrap>
+                {ticket.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </Space>
+            </>
           )}
-        </div>
-      </div>
+        </Space>
+      </Card>
 
-      {/* Timeline */}
-      <div className="bg-white rounded-2xl shadow-apple mb-6">
-        <div className="p-8">
-          <h2 className="text-xl font-semibold text-apple-gray-900 mb-6 tracking-tight">
-            Conversation Timeline
-          </h2>
-          <div className="space-y-4">
-            {ticket.timeline.map((message) => (
-              <MessageBubble key={message.message_id} message={message} />
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Timeline Card */}
+      <Card title="Conversation Timeline">
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {ticket.timeline.map((message) => (
+            <MessageBubble key={message.message_id} message={message} />
+          ))}
+        </Space>
+      </Card>
 
-      {/* Reply Box */}
-      <div className="bg-white rounded-2xl shadow-apple-lg p-6 sticky bottom-4">
-        <div className="mb-4">
-          <label className="flex items-center space-x-2 text-sm text-apple-gray-700 mb-3">
-            <input
-              type="checkbox"
-              checked={isInternalNote}
-              onChange={(e) => setIsInternalNote(e.target.checked)}
-              className="rounded border-apple-gray-300 text-apple-blue focus:ring-apple-blue focus:ring-opacity-50"
-            />
-            <span className="flex items-center font-medium">
+      {/* Reply Box Card */}
+      <Card>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Checkbox
+            checked={isInternalNote}
+            onChange={(e) => setIsInternalNote(e.target.checked)}
+          >
+            <Space size="small">
               {isInternalNote ? (
                 <>
-                  <EyeOff className="h-4 w-4 mr-1.5" />
-                  Internal Note (not visible to customer)
+                  <EyeInvisibleOutlined />
+                  <Text>Internal Note (not visible to customer)</Text>
                 </>
               ) : (
                 <>
-                  <Eye className="h-4 w-4 mr-1.5" />
-                  Public Reply (sent to customer)
+                  <EyeOutlined />
+                  <Text>Public Reply (sent to customer)</Text>
                 </>
               )}
-            </span>
-          </label>
-          <textarea
+            </Space>
+          </Checkbox>
+
+          <TextArea
             value={messageContent}
             onChange={(e) => setMessageContent(e.target.value)}
             onKeyDown={(e) => {
@@ -266,28 +279,26 @@ const TicketDetail: React.FC = () => {
                 : 'Type your reply to the customer...'
             }
             rows={4}
-            className="block w-full rounded-xl border-apple-gray-300 shadow-apple focus:border-apple-blue focus:ring-2 focus:ring-apple-blue focus:ring-opacity-50 sm:text-sm transition-all resize-none"
+            autoSize={{ minRows: 4, maxRows: 8 }}
           />
-        </div>
-        <div className="flex justify-between items-center">
-          <p className="text-xs font-medium text-apple-gray-500">
-            Cmd/Ctrl + Enter to send
-          </p>
-          <button
-            onClick={handleSendMessage}
-            disabled={!messageContent.trim() || sendMessageMutation.isPending}
-            className="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-          >
-            {sendMessageMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
-            Send {isInternalNote ? 'Note' : 'Reply'}
-          </button>
-        </div>
-      </div>
-    </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Cmd/Ctrl + Enter to send
+            </Text>
+            <Button
+              type="primary"
+              icon={sendMessageMutation.isPending ? <LoadingOutlined /> : <SendOutlined />}
+              onClick={handleSendMessage}
+              disabled={!messageContent.trim() || sendMessageMutation.isPending}
+              size="large"
+            >
+              Send {isInternalNote ? 'Note' : 'Reply'}
+            </Button>
+          </div>
+        </Space>
+      </Card>
+    </Space>
   );
 };
 
