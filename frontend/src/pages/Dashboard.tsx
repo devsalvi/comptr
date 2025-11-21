@@ -22,10 +22,11 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['tickets', statusFilter],
     queryFn: () => ticketsApi.getTickets({ status: statusFilter || undefined }),
     refetchInterval: 10000, // Poll every 10 seconds
+    retry: 2,
   });
 
   const tickets: Ticket[] = data?.tickets || [];
@@ -150,7 +151,24 @@ const Dashboard: React.FC = () => {
           Recent Tickets
         </h2>
 
-        {isLoading ? (
+        {error ? (
+          <div className="text-center py-24 bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-apple-lg border border-red-100">
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+              <AlertCircle className="h-10 w-10 text-red-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-apple-gray-900">Unable to load tickets</h3>
+            <p className="mt-3 text-base text-apple-gray-600 max-w-md mx-auto">
+              There was a problem loading your tickets. This could be due to a network issue or authentication problem.
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </button>
+          </div>
+        ) : isLoading ? (
           <div className="text-center py-24 bg-white rounded-2xl shadow-apple-lg">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-apple-blue border-t-transparent"></div>
             <p className="mt-6 text-base font-medium text-apple-gray-600">Loading tickets...</p>

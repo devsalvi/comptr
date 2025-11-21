@@ -32,7 +32,8 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
-        "https://*.amplifyapp.com"
+        "https://main.d3a45r9qetixv5.amplifyapp.com",
+        "*"  # Allow all origins for now
     ]
 
     # Social Media API Keys (stored in AWS Secrets Manager)

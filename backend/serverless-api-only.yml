@@ -1,0 +1,66 @@
+service: omnichannel-support-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: us-east-1
+  stage: dev
+
+  # IAM permissions
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions for existing tables
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - arn:aws:dynamodb:us-east-1:*:table/support-tickets-dev
+            - arn:aws:dynamodb:us-east-1:*:table/support-tickets-dev/index/*
+            - arn:aws:dynamodb:us-east-1:*:table/support-customers-dev
+            - arn:aws:dynamodb:us-east-1:*:table/support-customers-dev/index/*
+
+  # Environment variables pointing to existing resources
+  environment:
+    DYNAMODB_TICKETS_TABLE: support-tickets-dev
+    DYNAMODB_CUSTOMERS_TABLE: support-customers-dev
+    COGNITO_USER_POOL_ID: us-east-1_QcMqBPp39
+    COGNITO_APP_CLIENT_ID: 3bvao34ggrm8e8sfbjksf0k36t
+    COGNITO_REGION: us-east-1
+    # Mock Kafka for now (not using it yet)
+    KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+# Lambda function
+functions:
+  api:
+    handler: app.main.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    strip: true
+    layer: true
+    zip: true
+    useStaticCache: false
+    useDownloadCache: false
+    fileName: requirements-lambda.txt

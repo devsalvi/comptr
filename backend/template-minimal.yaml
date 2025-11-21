@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Omnichannel Support API - Minimal
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        DYNAMODB_TICKETS_TABLE: support-tickets-dev
+        DYNAMODB_CUSTOMERS_TABLE: support-customers-dev
+        COGNITO_USER_POOL_ID: us-east-1_QcMqBPp39
+        COGNITO_APP_CLIENT_ID: 3bvao34ggrm8e8sfbjksf0k36t
+        COGNITO_REGION: us-east-1
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+Resources:
+  SupportApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+          - PATCH
+        AllowCredentials: false
+        MaxAge: 600
+
+  SupportApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: app.main.handler
+      Events:
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref SupportApiGateway
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref SupportApiGateway
+            Path: /{proxy+}
+            Method: ANY
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: support-tickets-dev
+        - DynamoDBCrudPolicy:
+            TableName: support-customers-dev
+        - Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:Query
+            Resource:
+              - arn:aws:dynamodb:us-east-1:*:table/support-tickets-dev/index/*
+              - arn:aws:dynamodb:us-east-1:*:table/support-customers-dev/index/*
+    Metadata:
+      BuildMethod: python3.12
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${SupportApiGateway}.execute-api.${AWS::Region}.amazonaws.com/"
+  FunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt SupportApi.Arn
+  ApiId:
+    Description: "API Gateway ID"
+    Value: !Ref SupportApiGateway

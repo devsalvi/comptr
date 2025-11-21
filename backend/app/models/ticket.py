@@ -41,15 +41,15 @@ class SenderType(str, Enum):
 
 class Source(BaseModel):
     channel: Channel
-    origin_platform_id: str = Field(
-        ...,
+    origin_platform_id: Optional[str] = Field(
+        None,
         description="The thread ID from external platform for reply routing"
     )
     is_bot_handoff: bool = False
 
 
 class Customer(BaseModel):
-    internal_id: str
+    internal_id: Optional[str] = None
     name: Optional[str] = None
     primary_email: Optional[str] = None
     channel_identity: str = Field(

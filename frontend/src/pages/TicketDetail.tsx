@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ticketsApi } from '../api/tickets';
-import { ArrowLeft, Send, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Eye, EyeOff, Loader2, AlertCircle, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import ChannelBadge from '../components/ChannelBadge';
@@ -20,11 +20,12 @@ const TicketDetail: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('');
 
   // Fetch ticket data
-  const { data: ticket, isLoading } = useQuery({
+  const { data: ticket, isLoading, error } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: () => ticketsApi.getTicket(ticketId!),
     enabled: !!ticketId,
     refetchInterval: 5000, // Poll for new messages
+    retry: 2,
   });
 
   // Send message mutation
@@ -70,16 +71,78 @@ const TicketDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+      <div className="max-w-5xl mx-auto">
+        <button
+          onClick={() => navigate('/tickets')}
+          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+          Back to tickets
+        </button>
+        <div className="text-center py-24 bg-white rounded-2xl shadow-apple-lg">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-apple-blue border-t-transparent"></div>
+          <p className="mt-6 text-base font-medium text-apple-gray-600">Loading ticket details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <button
+          onClick={() => navigate('/tickets')}
+          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+          Back to tickets
+        </button>
+        <div className="text-center py-24 bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-apple-lg border border-red-100">
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+            <AlertCircle className="h-10 w-10 text-red-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-apple-gray-900">Unable to load ticket</h3>
+          <p className="mt-3 text-base text-apple-gray-600 max-w-md mx-auto">
+            We couldn't load this ticket. It may have been deleted or you may not have permission to view it.
+          </p>
+          <button
+            onClick={() => navigate('/tickets')}
+            className="mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Tickets
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!ticket) {
     return (
-      <div className="text-center py-12">
-        <p className="text-apple-gray-500">Ticket not found</p>
+      <div className="max-w-5xl mx-auto">
+        <button
+          onClick={() => navigate('/tickets')}
+          className="flex items-center text-apple-gray-600 hover:text-apple-gray-900 mb-6 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+          Back to tickets
+        </button>
+        <div className="text-center py-24 bg-gradient-to-br from-white to-apple-gray-50 rounded-2xl shadow-apple-lg border border-apple-gray-100">
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-apple-gray-100 mb-6">
+            <MessageSquare className="h-10 w-10 text-apple-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-apple-gray-900">Ticket not found</h3>
+          <p className="mt-3 text-base text-apple-gray-600 max-w-md mx-auto">
+            The ticket you're looking for doesn't exist or has been removed.
+          </p>
+          <button
+            onClick={() => navigate('/tickets')}
+            className="mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold text-white bg-apple-blue hover:bg-apple-blue-dark shadow-apple transition-all hover:shadow-apple-lg active:scale-95"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Tickets
+          </button>
+        </div>
       </div>
     );
   }

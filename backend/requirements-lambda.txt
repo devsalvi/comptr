@@ -1,0 +1,6 @@
+fastapi==0.104.1
+mangum==0.17.0
+pydantic==2.9.2
+python-dateutil==2.8.2
+boto3==1.28.85
+aiokafka==0.11.0
