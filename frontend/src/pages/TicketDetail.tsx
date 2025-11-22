@@ -16,6 +16,9 @@ import {
   Alert,
   Tag,
   Divider,
+  Row,
+  Col,
+  Grid,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -34,15 +37,19 @@ import MessageBubble from '../components/MessageBubble';
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { useBreakpoint } = Grid;
 
 const TicketDetail: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const screens = useBreakpoint();
 
   const [messageContent, setMessageContent] = useState('');
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
+
+  const isMobile = !screens.md;
 
   const { data: ticket, isLoading, error } = useQuery({
     queryKey: ['ticket', ticketId],
@@ -170,7 +177,7 @@ const TicketDetail: React.FC = () => {
   }
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: 1200 }}>
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
@@ -182,8 +189,8 @@ const TicketDetail: React.FC = () => {
       {/* Header Card */}
       <Card>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={18}>
               <Title level={2} style={{ marginTop: 0, marginBottom: 16 }}>
                 {ticket.subject}
               </Title>
@@ -200,17 +207,17 @@ const TicketDetail: React.FC = () => {
                 <Text type="secondary">Ticket ID: {ticket.ticket_id}</Text>
                 <Text type="secondary">Created: {format(new Date(ticket.created_at), 'PPpp')}</Text>
               </Space>
-            </div>
+            </Col>
 
             {/* Status selector */}
-            <div style={{ marginLeft: 24 }}>
+            <Col xs={24} md={6}>
               <Text strong style={{ display: 'block', marginBottom: 8 }}>
                 Status
               </Text>
               <Select
                 value={selectedStatus || ticket.status}
                 onChange={handleStatusChange}
-                style={{ width: 180 }}
+                style={{ width: '100%', maxWidth: 200 }}
               >
                 <Option value="new">New</Option>
                 <Option value="open">Open</Option>
@@ -218,8 +225,8 @@ const TicketDetail: React.FC = () => {
                 <Option value="resolved">Resolved</Option>
                 <Option value="closed">Closed</Option>
               </Select>
-            </div>
-          </div>
+            </Col>
+          </Row>
 
           {ticket.tags.length > 0 && (
             <>
@@ -282,20 +289,25 @@ const TicketDetail: React.FC = () => {
             autoSize={{ minRows: 4, maxRows: 8 }}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Cmd/Ctrl + Enter to send
-            </Text>
-            <Button
-              type="primary"
-              icon={sendMessageMutation.isPending ? <LoadingOutlined /> : <SendOutlined />}
-              onClick={handleSendMessage}
-              disabled={!messageContent.trim() || sendMessageMutation.isPending}
-              size="large"
-            >
-              Send {isInternalNote ? 'Note' : 'Reply'}
-            </Button>
-          </div>
+          <Row justify="space-between" align="middle" gutter={[16, 8]}>
+            <Col xs={24} sm={12}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Cmd/Ctrl + Enter to send
+              </Text>
+            </Col>
+            <Col xs={24} sm={12} style={{ textAlign: isMobile ? 'left' : 'right' }}>
+              <Button
+                type="primary"
+                icon={sendMessageMutation.isPending ? <LoadingOutlined /> : <SendOutlined />}
+                onClick={handleSendMessage}
+                disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                size="large"
+                block={isMobile}
+              >
+                Send {isInternalNote ? 'Note' : 'Reply'}
+              </Button>
+            </Col>
+          </Row>
         </Space>
       </Card>
     </Space>

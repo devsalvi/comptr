@@ -58,17 +58,19 @@ const Dashboard: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       {/* Header */}
-      <Row justify="space-between" align="middle">
-        <Col>
+      <Row justify="space-between" align="middle" gutter={[16, 16]}>
+        <Col xs={24} sm={24} md={16}>
           <Title level={2} style={{ margin: 0 }}>Dashboard</Title>
           <Text type="secondary">Unified inbox for all customer support channels</Text>
         </Col>
-        <Col>
+        <Col xs={24} sm={24} md={8} style={{ textAlign: 'right' }}>
           <Button
             type="primary"
             icon={<ReloadOutlined />}
             onClick={() => refetch()}
             size="large"
+            block
+            style={{ maxWidth: 200 }}
           >
             Refresh
           </Button>
@@ -121,14 +123,14 @@ const Dashboard: React.FC = () => {
 
       {/* Filters */}
       <Card>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Space>
+        <Row justify="space-between" align="middle" gutter={[16, 16]}>
+          <Col xs={24} sm={16}>
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <Text strong>Filter by:</Text>
               <Select
                 value={statusFilter}
                 onChange={setStatusFilter}
-                style={{ width: 200 }}
+                style={{ width: '100%', maxWidth: 300 }}
                 placeholder="All Statuses"
               >
                 <Option value="">All Statuses</Option>
@@ -139,7 +141,7 @@ const Dashboard: React.FC = () => {
               </Select>
             </Space>
           </Col>
-          <Col>
+          <Col xs={24} sm={8} style={{ textAlign: 'right' }}>
             <Text type="secondary">
               {tickets.length} {tickets.length === 1 ? 'ticket' : 'tickets'}
             </Text>
