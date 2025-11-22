@@ -84,25 +84,44 @@ const Layout: React.FC<LayoutProps> = ({ children, user, signOut }) => {
           background: '#fff',
           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           padding: headerPadding,
-          height: 64,
+          height: isMobile ? 56 : 64,
+          minHeight: isMobile ? 56 : 64,
         }}
       >
-        <Space size={isMobile ? 'small' : 'large'} align="center">
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
-            <Avatar
-              size={isMobile ? 32 : 40}
+        <Link
+          to="/"
+          style={{
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: isMobile ? 8 : 12,
+            overflow: 'hidden',
+          }}
+        >
+          <Avatar
+            size={isMobile ? 36 : 40}
+            style={{
+              background: 'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
+              flexShrink: 0,
+            }}
+            icon={<InboxOutlined style={{ fontSize: isMobile ? 16 : 20 }} />}
+          />
+          {!isMobile && (
+            <Title
+              level={4}
               style={{
-                background: 'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
+                margin: 0,
+                color: '#262626',
+                fontSize: isTablet ? 18 : 20,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
-              icon={<InboxOutlined />}
-            />
-            {!isMobile && (
-              <Title level={4} style={{ margin: 0, color: '#262626', fontSize: isTablet ? 18 : 20 }}>
-                Customer Toolkit
-              </Title>
-            )}
-          </Link>
-        </Space>
+            >
+              Customer Toolkit
+            </Title>
+          )}
+        </Link>
 
         <Space size={isMobile ? 'small' : 'middle'}>
           {!isMobile && (
@@ -132,7 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, signOut }) => {
           <div
             style={{
               position: 'sticky',
-              top: 64,
+              top: 56,
               zIndex: 999,
               background: '#fff',
               borderBottom: '1px solid #f0f0f0',
