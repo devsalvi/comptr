@@ -7,6 +7,9 @@ import { ConfigProvider, theme } from 'antd';
 
 import Dashboard from './pages/Dashboard';
 import TicketDetail from './pages/TicketDetail';
+import Customers from './pages/Customers';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
 import Layout from './components/Layout';
 
 function App() {
@@ -29,6 +32,9 @@ function App() {
                 <Route path="/" element={<Navigate to="/tickets" replace />} />
                 <Route path="/tickets" element={<Dashboard />} />
                 <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<Settings />} />
               </Routes>
             </Layout>
             <Toaster position="top-right" />
